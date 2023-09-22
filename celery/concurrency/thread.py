@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from concurrent.futures import Future, ThreadPoolExecutor, wait
 from typing import TYPE_CHECKING, Any, Callable
+import signal, psutil
 
 from .base import BasePool, apply_target
 
@@ -62,3 +63,25 @@ class TaskPool(BasePool):
             'threads': len(self.executor._threads)
         })
         return info
+
+    def terminate_job(self, pid, signal=None):
+        # wait=True, 等待池内所有任务执行完毕回收完资源后才继续
+        # wait=False，立即返回，并不会等待池内的任务执行完毕
+        # 但无论wait是什么参数，整个程序都会等到所有任务执行完毕
+        # self.executor.shutdown(wait=False, cancel_futures=False)
+        # self.executor.shutdown(wait=False, cancel_futures=False)
+        # self.executor.shutdown会导致无法提交后续任务
+        self.kill_child_processes(pid)
+        
+    def kill_child_processes(self, parent_pid, sig=signal.SIGTERM):
+        try:
+            parent = psutil.Process(parent_pid)
+            print("Will the process will run here.")
+        except psutil.NoSuchProcess:
+            return
+        children = parent.children(recursive=True)
+        i = 0
+        for process in children:
+            print(i)
+            i += 1
+            process.send_signal(sig)
