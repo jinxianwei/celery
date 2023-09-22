@@ -80,8 +80,5 @@ class TaskPool(BasePool):
         except psutil.NoSuchProcess:
             return
         children = parent.children(recursive=True)
-        i = 0
         for process in children:
-            print(i)
-            i += 1
             process.send_signal(sig)
